@@ -4,6 +4,7 @@ import register from '@/views/register.vue'
 import forget from '@/views/forget.vue'
 import Home from '@/views/Home.vue'
 import History from '@/views/history.vue'
+import Settings from '@/views/Settings.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -52,6 +53,11 @@ const router = createRouter({
           name: 'storyDetail',
           component: History,
           props: true
+        },
+        {
+          path: '/settings',
+          name: 'settings',
+          component: Settings
         }
       ]  
     }
