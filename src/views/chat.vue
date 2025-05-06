@@ -160,6 +160,13 @@
               <!-- 故事消息列表 -->
               <div class="message-list" ref="messageContainer">
                 <div
+      v-for="(message, index) in messages"
+      :key="index"
+      :class="['message-item', message.type === 'ai' ? 'ai-message' : 'user-message']"
+    >
+      
+      
+                <div
                   v-for="(message, index) in messages"
                   :key="index"
                   :class="['message-row', message.type]"
@@ -170,6 +177,16 @@
                   <div :class="['message', message.type === 'user' ? 'user-message' : 'ai-message']">
                     <div v-html="formatContentWithPinyin(message.content)"></div>
                   </div>
+                  <div class="message-time">{{ formatMessageTime(message.createTime) }}</div>
+                  <!-- 添加播放语音按钮 -->
+                    <el-button
+                    v-if="message.type === 'ai'"
+                    type="text"
+                    @click="toggleSpeech(message)"
+                  >
+                    <i class="el-icon-volume-up"></i> {{ getButtonText(message) }}
+                  </el-button>
+                </div>
                   <div v-if="message.type === 'user'" class="message-avatar">
                     <img :src="userAvatar || generateUserAvatar" alt="小朋友头像" class="avatar" @error="handleAvatarError($event, 'user')" />
                   </div>
@@ -289,6 +306,57 @@
   const generateUserAvatar = computed(() => {
     return `https://api.dicebear.com/7.x/adventurer/svg?seed=${childName.value || 'child'}`;
   });
+  // 语音合成实例
+const synth = window.speechSynthesis;
+// 用于存储每个消息的语音播放状态
+const speechStates = ref({});
+// 切换语音播放状态
+const toggleSpeech = (message) => {
+  const { id } = message;
+  const currentState = speechStates.value[id];
+
+  if (!currentState) {
+    // 第一次点击，开始播放
+    playSpeech(message.content);
+    speechStates.value[id] = { playing: true, paused: false };
+  } else if (currentState.playing &&!currentState.paused) {
+    // 正在播放，点击暂停
+    synth.pause();
+    speechStates.value[id].paused = true;
+  } else if (currentState.playing && currentState.paused) {
+    // 已暂停，点击继续播放
+    synth.resume();
+    speechStates.value[id].paused = false;
+  }
+};
+// 播放语音方法
+const playSpeech = (text) => {
+  if (synth.speaking) {
+    synth.cancel();
+  }
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'zh-CN';
+  synth.speak(utterance);
+};
+// 获取按钮文字
+const getButtonText = (message) => {
+  const { id } = message;
+  const currentState = speechStates.value[id];
+
+  if (!currentState) {
+    return '播放语音';
+  } else if (currentState.playing &&!currentState.paused) {
+    return '暂停';
+  } else if (currentState.playing && currentState.paused) {
+    return '继续播放';
+  }
+};
+// 格式化消息时间
+const formatMessageTime = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
   // 获取本地存储的设置
 const storedSettings = JSON.parse(localStorage.getItem('settings')) || {};
 
@@ -311,7 +379,6 @@ onMounted(() => {
     
   } else {
     // 添加或修改消息气泡样式为圆角
-   
   }
 
   // 应用字体大小设置
