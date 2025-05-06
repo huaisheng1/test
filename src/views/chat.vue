@@ -289,7 +289,35 @@
   const generateUserAvatar = computed(() => {
     return `https://api.dicebear.com/7.x/adventurer/svg?seed=${childName.value || 'child'}`;
   });
+  // 获取本地存储的设置
+const storedSettings = JSON.parse(localStorage.getItem('settings')) || {};
 
+onMounted(() => {
+  // 应用主题模式
+  if (storedSettings.themeMode === 'dark') {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+
+  // 应用侧边栏固定设置
+  // 这里需要根据实际的侧边栏组件逻辑进行调整
+  sidebarCollapsed.value = !storedSettings.sidebarFixed;
+
+  // 应用消息气泡形状设置
+  // 这里需要根据实际的消息气泡样式进行调整
+  if (storedSettings.messageBubbleShape === 'square') {
+    // 添加或修改消息气泡样式为直角
+    
+  } else {
+    // 添加或修改消息气泡样式为圆角
+   
+  }
+
+  // 应用字体大小设置
+  document.documentElement.style.fontSize = storedSettings.fontSize === 'small' ? '14px' : storedSettings.fontSize === 'medium' ? '18px' : '22px';
+
+});
   // 生命周期钩子
   onMounted(() => {
     // 初始化语音识别
@@ -931,7 +959,11 @@
     background-color: #f0f8ff;
     background-image: linear-gradient(135deg, #c9f0ff 0%, #f5f7fa 100%);
   }
-  
+  /* 深色模式样式 */
+.dark-mode {
+  background-color: #121212;
+  color: white;
+}
   .storybook-view {
     display: flex;
     justify-content: flex-start;
