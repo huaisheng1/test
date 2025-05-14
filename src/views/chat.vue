@@ -103,7 +103,7 @@
                       <div v-if="showCreateChild" class="create-child-form">
                         <el-input v-model="childName" placeholder="请输入小朋友的名字"></el-input>
                         <el-select v-model="childAge" placeholder="选择年龄">
-                          <el-option v-for="age in [3, 4, 5, 6]" :key="age" :label="`${age}岁`" :value="age"></el-option>
+                          <el-option v-for="age in [6,7,8,9]" :key="age" :label="`${age}岁`" :value="age"></el-option>
                         </el-select>
                         <el-select v-model="childGender" placeholder="选择性别">
                           <el-option label="男孩" value="男"></el-option>
@@ -120,7 +120,7 @@
                   <div v-if="!showCreateChild" class="form-item">
                     <label>小朋友的年龄</label>
                     <el-select v-model="childAge" placeholder="选择年龄" :disabled="selectedChild && selectedChild !== 'create-new'">
-                      <el-option v-for="age in [3, 4, 5, 6]" :key="age" :label="`${age}岁`" :value="age"></el-option>
+                      <el-option v-for="age in [6,7,8,9]" :key="age" :label="`${age}岁`" :value="age"></el-option>
                     </el-select>
                   </div>
                   
@@ -158,14 +158,7 @@
             <!-- 故事内容区域 -->
             <div v-else class="story-content">
               <!-- 故事消息列表 -->
-              <div class="message-list" ref="messageContainer">
-                <div
-      v-for="(message, index) in messages"
-      :key="index"
-      :class="['message-item', message.type === 'ai' ? 'ai-message' : 'user-message']"
-    >
-      
-      
+               <div class="message-list" ref="messageContainer">
                 <div
                   v-for="(message, index) in messages"
                   :key="index"
@@ -177,7 +170,7 @@
                   <div :class="['message', message.type === 'user' ? 'user-message' : 'ai-message']">
                     <div v-html="formatContentWithPinyin(message.content)"></div>
                   </div>
-                  <div class="message-time">{{ formatMessageTime(message.createTime) }}</div>
+                   <div class="message-time">{{ formatMessageTime(message.createTime) }}</div>
                   <!-- 添加播放语音按钮 -->
                     <el-button
                     v-if="message.type === 'ai'"
@@ -186,12 +179,13 @@
                   >
                     <i class="el-icon-volume-up"></i> {{ getButtonText(message) }}
                   </el-button>
-                </div>
+                
                   <div v-if="message.type === 'user'" class="message-avatar">
                     <img :src="userAvatar || generateUserAvatar" alt="小朋友头像" class="avatar" @error="handleAvatarError($event, 'user')" />
                   </div>
                 </div>
               </div>
+  
   
               <!-- 互动输入区域 -->
               <div class="message-input">
