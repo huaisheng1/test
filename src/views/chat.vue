@@ -90,12 +90,25 @@
                         style="width: 100%;"
                       >
                         <el-option-group label="已有小朋友">
+                          
                           <el-option 
                             v-for="child in childrenList" 
                             :key="child.id" 
                             :label="child.name + ' (' + child.age + '岁)'" 
                             :value="child.id">
+                          <template #default>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                              <span>{{ child.name }}（{{ child.age }}岁）</span>
+                              <el-button
+                                type="danger"
+                                size="mini"
+                                @click.stop="confirmDelete(child)"
+                              >删除</el-button>
+                            </div>
+                          </template>
                           </el-option>
+                         
+                          
                         </el-option-group>
                         <el-option value="create-new" label="+ 创建新小朋友"></el-option>
                       </el-select>
@@ -189,26 +202,26 @@
   
               <!-- 互动输入区域 -->
               <div class="message-input">
-                <el-input
-                  v-model="userInput"
-                  type="textarea"
-                  :rows="2"
-                  :placeholder="inputPlaceholder"
-                  @keyup.enter.native="sendMessage"
-                />
-                <div class="control-buttons">
-                  <el-button type="warning" @click="restartStory">
-                    重新开始
-                  </el-button>
-                  <el-button type="primary" @click="sendMessage" :loading="loading">
-                    <i class="el-icon-s-promotion"></i> 发送
-                  </el-button>
-                  <el-button type="success" @click="toggleVoiceInput">
-                    <i :class="isListening ? 'el-icon-microphone' : 'el-icon-turn-off-microphone'"></i> 
-                    {{ isListening ? '正在听...' : '语音输入' }}
-                  </el-button>
-                </div>
-              </div>
+        <el-input
+          v-model="userInput"
+          type="textarea"
+          :rows="2"
+          :placeholder="inputPlaceholder"
+          @keyup.enter.native="sendMessage"
+        />
+        <div class="control-buttons">
+          <el-button type="warning" @click="restartStory">
+            重新开始
+          </el-button>
+          <el-button type="primary" @click="sendMessage" :loading="loading">
+            <i class="el-icon-s-promotion"></i> 发送
+          </el-button>
+          <el-button type="success" @click="toggleVoiceInput">
+            <i :class="isListening ? 'el-icon-microphone' : 'el-icon-turn-off-microphone'"></i> 
+            {{ isListening ? '正在听...' : '语音输入' }}
+          </el-button>
+        </div>
+      </div>
             </div>
           </div>
         </div>
@@ -243,13 +256,13 @@
   const socket = ref(null);
   const isConnected = ref(false);
   const reconnectAttempts = ref(0);
-  const maxReconnectAttempts = 5;
+  const maxReconnectAttempts = 8;
   const reconnectInterval = 3000;
 
   // 故事设置
   const storyStarted = ref(false);
   const childName = ref('');
-  const childAge = ref(5);
+  const childAge = ref(6);
   const childGender = ref('');
   const storyType = ref('学习成长');
   const childrenList = ref([]);
@@ -425,52 +438,51 @@ onMounted(() => {
     // 移除窗口大小变化监听
     window.removeEventListener('resize', handleResize);
   });
+// 初始化语音识别
+const initSpeechRecognition = () => {
+  if ('webkitSpeechRecognition' in window) {
+    recognition.value = new webkitSpeechRecognition();
+    recognition.value.continuous = false;
+    recognition.value.interimResults = false;
+    recognition.value.lang = 'zh-CN';
 
-  // 方法
-  function initSpeechRecognition() {
-    if ('webkitSpeechRecognition' in window) {
-      recognition.value = new webkitSpeechRecognition();
-      recognition.value.continuous = false;
-      recognition.value.interimResults = false;
-      recognition.value.lang = 'zh-CN';
-      
-      recognition.value.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        userInput.value = transcript;
-        isListening.value = false;
-        // 自动发送识别到的内容
-        sendMessage();
-      };
-      
-      recognition.value.onerror = (event) => {
-        console.error('语音识别错误:', event.error);
-        isListening.value = false;
-        ElMessage.error('语音识别失败，请重试或使用文字输入');
-      };
-      
-      recognition.value.onend = () => {
-        isListening.value = false;
-      };
-    } else {
-      ElMessage.warning('你的浏览器不支持语音识别功能');
-    }
-  }
-
-  function toggleVoiceInput() {
-    if (!recognition.value) {
-      ElMessage.warning('你的浏览器不支持语音识别功能');
-      return;
-    }
-    
-    if (isListening.value) {
-      recognition.value.stop();
+    recognition.value.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      userInput.value = transcript;
       isListening.value = false;
-    } else {
-      recognition.value.start();
-      isListening.value = true;
-      ElMessage.success('开始聆听，请对着麦克风说话...');
-    }
+      // 自动发送识别到的内容
+      sendMessage();
+    };
+
+    recognition.value.onerror = (event) => {
+      console.error('语音识别错误:', event.error);
+      isListening.value = false;
+      ElMessage.error('语音识别失败，请重试或使用文字输入');
+    };
+
+    recognition.value.onend = () => {
+      isListening.value = false;
+    };
+  } else {
+    ElMessage.warning('你的浏览器不支持语音识别功能');
   }
+};
+// 切换语音输入状态
+const toggleVoiceInput = () => {
+  if (!recognition.value) {
+    ElMessage.warning('你的浏览器不支持语音识别功能');
+    return;
+  }
+
+  if (isListening.value) {
+    recognition.value.stop();
+    isListening.value = false;
+  } else {
+    recognition.value.start();
+    isListening.value = true;
+    ElMessage.success('开始聆听，请对着麦克风说话...');
+  }
+};
 
   function selectTheme(theme) {
     selectedTheme.value = theme;
@@ -938,7 +950,7 @@ onMounted(() => {
       // 选择创建新小朋友
       showCreateChild.value = true;
       childName.value = '';
-      childAge.value = 5;
+      childAge.value = 6;
       childGender.value = '';
       childId.value = null;
     } else {
@@ -1012,6 +1024,54 @@ onMounted(() => {
       childId.value = null;
     }
   }
+ //删除小朋友
+async function confirmDelete(child) {
+  try {
+    // 显示确认对话框
+    await ElMessageBox.confirm(
+      `确定要删除小朋友 "${child.name}" 吗？删除后将无法恢复。`,
+      '确认删除',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    // 调用后端删除接口
+    const { data } = await axios.delete(`/api/child/${child.id}`, {
+      params: {
+        userId: userId.value,
+      },
+    });
+
+    if (data.code === 200) {
+      // 删除成功，更新本地数据
+      childrenList.value = childrenList.value.filter((c) => c.id !== child.id);
+      
+      // 如果删除的是当前选中的小朋友，重置表单
+      if (selectedChild.value === child.id) {
+        selectedChild.value = null;
+        childName.value = '';
+        childAge.value = 6;
+        childGender.value = '';
+        childId.value = null;
+        showCreateChild.value = true;
+      }
+      
+      ElMessage.success('删除成功');
+    } else {
+      throw new Error(data.message || '删除失败');
+    }
+  } catch (error) {
+    if (error.name !== 'CancelError') {
+      // 非用户取消操作导致的错误
+      console.error('删除小朋友失败:', error);
+      ElMessage.error(error.message || '删除失败，请重试');
+    }
+  }
+}
+
   </script>
   
   <style scoped>
@@ -1765,6 +1825,10 @@ onMounted(() => {
     gap: 10px;
     margin-top: 5px;
   }
+  .el-button--danger {
+  margin-right: 10px; /* 示例样式，可按需调整按钮位置 */
+}
+  
   </style>
   
   
